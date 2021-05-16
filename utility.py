@@ -4,10 +4,16 @@ import math
 RVO_EPSILON = 1e-5
 
 class Line(object):
-
     def __init__(self):
         self.direction = None
         self.point = None
+
+def rotationMatrix2D(theta):
+    radian = theta * np.pi / 180
+    return np.array([
+        [np.cos(radian), -np.sin(radian)],
+        [np.sin(radian), np.cos(radian)],
+    ])
 
 def abs(vector):
     return math.sqrt(np.dot(vector, vector))

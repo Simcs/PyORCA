@@ -5,6 +5,7 @@ class RVOSimulator(object):
 
     def __init__(self):
         self.global_time = 0.0
+        self.global_steps = 0
         self.time_step = 0.0
         self.default_agent = None
         self.agents = []
@@ -53,6 +54,7 @@ class RVOSimulator(object):
             agent.update()
 
         self.global_time += self.time_step
+        self.global_steps += 1
 
     def setAgentDefaults(self, time_horizon, radius, max_speed, velocity):
         if self.default_agent is None:
