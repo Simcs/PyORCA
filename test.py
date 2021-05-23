@@ -2,7 +2,6 @@ import sys
 import time
 import argparse
 import numpy as np
-import torch
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -10,12 +9,13 @@ from OpenGL.GLUT import *
 import glfw
 
 from simulator import RVOSimulator
-from circle import Circle
+from envs.circle import Circle
+from envs.crossing import Crossing
 from utility import *
 
-colors = [
 
-]
+def clip(value, min_value, max_value):
+    return max(min_value, min(value, max_value))
 
 class CrowdSimulator():
 
@@ -95,14 +95,14 @@ class CrowdSimulator():
         red = [1.0, 0.0, 0.0]
         for i in range(self.env.num_agents):
             for path in self.paths[i]:
-                self.paintCircle(path, 1, red)
+                self.paintCircle(path, 1, self.env.colors[i])
         # for agent in self.env.agents:
         #     self.paintCircle(agent.pos, agent.r, agent.color)
         #     self.paintCircle(agent.target, 2, [0.0, 0.0, 1.0])
         #     self.paintArrow(agent.vel, agent.pos, agent.r)
         for i in range(self.env.num_agents):
             agent = self.simulator.agents[i]
-            self.paintCircle(agent.position, agent.radius, red)
+            self.paintCircle(agent.position, agent.radius, self.env.colors[i])
             self.paintCircle(self.env.goals[i], 2, [0.0, 0.0, 1.0])
             self.paintArrow(agent.velocity, agent.position, agent.radius)
 
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # parser.add_argument("-m", "--model", required=True, help="Model file to load")
     # parser.add_argument("--dt", required=True, help="Simulation time step")
-    # parser.add_argument("-e", "--env", default="basic", help="Environment name to use")
+    parser.add_argument("-e", "--env", default="circle", help="Environment name to use")
     parser.add_argument("--render", dest="render", action="store_true", help="Render environment")
     parser.add_argument("--no-render", dest="render", action="store_false", help="Do not render environment")
     parser.add_argument("--real", dest="real", action="store_true", help="Render in real time")
@@ -248,7 +248,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     simulator = RVOSimulator()
-    env = Circle(simulator)
+    if args.env == "crossing":
+        env = Crossing(simulator)
+    else:
+        env = Circle(simulator)
     env.setUpScenario()
 
     if args.render:
@@ -277,15 +280,16 @@ if __name__ == "__main__":
             glfw.swap_buffers(sim.window)
 
             # record positions for every 5 seconds.
-            # if (env.frame * env.dt) % 5 == 0:
-            #     for i in range(len(env.agents)):
-            #         sim.paths[i].append(env.agents[i].pos)
-            if sim.simulator.global_time % 5 == 0:
+            if sim.simulator.global_time > len(sim.paths[0]) * 5:
                 for i in range(sim.env.num_agents):
                     sim.paths[i].append(sim.simulator.agents[i].position)
 
             if args.real:
                 time.sleep(sim.simulator.time_step)
+            
+            if env.reachedGoal():
+                print('All agents reached goal!')
+                break
 
     else:
         while not env.reachedGoal():

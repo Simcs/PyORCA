@@ -9,6 +9,8 @@ class Agent(object):
         self.simulator = sim
 
         self.id = 0
+        self.max_neighbors = 0
+        self.neighbor_dist = 0.0
         self.max_speed = 0.0
         self.radius = 0.0
         self.time_horizon = 0.0
@@ -20,19 +22,24 @@ class Agent(object):
 
         self.orca_lines = []
         self.agent_neighbors = []
+
+    def computeNeighbors(self):
+        self.agent_neighbors = []
+        self.simulator.computeAgentNeighbors(self)
+
     
     def computeNewVelocity(self):
         self.orca_lines = []
         inv_time_horizon = 1.0 / self.time_horizon
 
-        line = Line()
-
         for other in self.agent_neighbors:
             relative_position = other.position - self.position
             relative_velocity = self.velocity - other.velocity
-            dist_sq = absSq(relativePos)
+            dist_sq = absSq(relative_position)
             combined_radius = self.radius + other.radius
             combined_radius_sq = combined_radius ** 2
+
+            line = Line()
             
             if dist_sq > combined_radius_sq:
                 # No collision
@@ -55,20 +62,20 @@ class Agent(object):
                         line.direction = np.array([
                             relative_position[0] * leg - relative_position[1] * combined_radius,
                             relative_position[0] * combined_radius + relative_position[1] * leg,
-                        ])
+                        ]) / dist_sq
                     else:
                         # Project on right leg
                         line.direction = -np.array([
                             relative_position[0] * leg - relative_position[1] * combined_radius,
                             -relative_position[0] * combined_radius + relative_position[1] * leg,
-                        ])
+                        ]) / dist_sq
 
-                    dot_product_2 = relative_velocity * line.direction
+                    dot_product_2 = np.dot(relative_velocity, line.direction)
                     u = dot_product_2 * line.direction - relative_velocity
 
             else:
                 # Collision. Project on cut-off circle of time timeStep
-                inv_time_step = 1.0 / self.sim.time_step
+                inv_time_step = 1.0 / self.simulator.time_step
 
                 w = relative_velocity - inv_time_step * relative_position
                 w_length = abs(w)
@@ -80,16 +87,16 @@ class Agent(object):
             line.point = self.velocity + 0.5 * u
             self.orca_lines.append(line)
         
-        line_fail, result = linearProgram2(self.orca_lines, self.max_speed, self.pref_velocity, False)
+        # print('maxsp:', self.max_speed, 'pref_vel:', self.pref_velocity)
+        line_fail, result = linearProgram2(self.orca_lines, self.max_speed, self.pref_velocity, False, self.new_velocity)
         self.new_velocity = result
 
         if line_fail < len(self.orca_lines):
-            result = linearProgram3(self.orca_lines, line_fail, self.max_speed)
+            result = linearProgram3(self.orca_lines, line_fail, self.max_speed, self.new_velocity)
             self.new_velocity = result
+        print('id:', self.id, 'new vel:', self.new_velocity)
     
     def update(self):
         self.velocity = self.new_velocity
         self.position += self.velocity * self.simulator.time_step
-
-
                     
