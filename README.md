@@ -1,7 +1,7 @@
 # PyORCA
 Python reimplementation of ORCA algorithm.
 
-### Simulate Circle environment
+### Simulation
 ```bash
 python main.py --env <ENV> --render --real
 ```
