@@ -19,13 +19,13 @@ class Circle(BaseEnv):
     def __init__(self, simulator):
         super(Circle, self).__init__(simulator)
 
-        self.num_agents = 5
+        self.num_agents = 8
         self.radius = 20
 
     def setUpScenario(self):
         self.simulator.time_step = 0.25
         self.simulator.setAgentDefaults(
-            time_horizon=10.0,
+            time_horizon=2.0,
             radius=1.5,
             max_speed=2.0,
             velocity=np.array([0., 0.]),
@@ -38,7 +38,7 @@ class Circle(BaseEnv):
             ])
             self.simulator.addAgent(pos)
             self.goals.append(-self.simulator.agents[i].position)
-            self.colors.append(np.array(colors[i]) / 255)
+            self.colors.append(np.array(colors[i % 8]) / 255)
 
 if __name__ == "__main__":
     simulator = RVOSimulator()

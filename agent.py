@@ -87,14 +87,12 @@ class Agent(object):
             line.point = self.velocity + 0.5 * u
             self.orca_lines.append(line)
         
-        # print('maxsp:', self.max_speed, 'pref_vel:', self.pref_velocity)
         line_fail, result = linearProgram2(self.orca_lines, self.max_speed, self.pref_velocity, False, self.new_velocity)
         self.new_velocity = result
 
         if line_fail < len(self.orca_lines):
             result = linearProgram3(self.orca_lines, line_fail, self.max_speed, self.new_velocity)
             self.new_velocity = result
-        print('id:', self.id, 'new vel:', self.new_velocity)
     
     def update(self):
         self.velocity = self.new_velocity

@@ -25,12 +25,9 @@ class CrowdSimulator():
             print('GLFW initialization failed')
             sys.exit()
 
-        # self.env = env
-        # self.model = model
         self.simulator = simulator
         self.env = env
-        
-        # self.paths = [[] for agent in self.env.agents]
+
         self.paths = [[] for i in range(self.env.num_agents)]
 
         self.radius = 150
@@ -87,19 +84,10 @@ class CrowdSimulator():
             glColor3f(0.1, 0.1, 0.1)
             glRectf(self.cp1[0], self.cp1[1], self.cp2[0], self.cp2[1])
 
-        # for obstacle in self.env.obstacles:
-        #     self.paintCircle(obstacle.pos, obstacle.r, [0.2, 0.5, 0.2])
-        # for i in range(len(self.paths)):
-        #     for p in self.paths[i]:
-        #         self.paintCircle(p, 1, self.env.agents[i].color)
-        red = [1.0, 0.0, 0.0]
         for i in range(self.env.num_agents):
             for path in self.paths[i]:
-                self.paintCircle(path, 1, self.env.colors[i])
-        # for agent in self.env.agents:
-        #     self.paintCircle(agent.pos, agent.r, agent.color)
-        #     self.paintCircle(agent.target, 2, [0.0, 0.0, 1.0])
-        #     self.paintArrow(agent.vel, agent.pos, agent.r)
+                self.paintCircle(path, 0.7, self.env.colors[i])
+
         for i in range(self.env.num_agents):
             agent = self.simulator.agents[i]
             self.paintCircle(agent.position, agent.radius, self.env.colors[i])
@@ -220,25 +208,9 @@ def getWorldCoordinate(x, y):
     z = glReadPixels(winX, winY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)
     return gluUnProject(winX, winY, z, modelView, projection, viewport)
 
-def step(env, model, state):
-    global avg_step_time, total_steps
-    
-    state = torch.FloatTensor(state)
-    dist, _ = model(state)
-    action = dist.sample().numpy()
-
-    start = time.perf_counter()
-    next_state, reward, _ = env.step(action)
-    elapsed = time.perf_counter() - start
-    avg_step_time = avg_step_time + (elapsed - avg_step_time) / total_steps
-    print(f'avg step elapsed: {avg_step_time:.5f}', end='\r')
-    return next_state, reward
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    # parser.add_argument("-m", "--model", required=True, help="Model file to load")
-    # parser.add_argument("--dt", required=True, help="Simulation time step")
     parser.add_argument("-e", "--env", default="circle", help="Environment name to use")
     parser.add_argument("--render", dest="render", action="store_true", help="Render environment")
     parser.add_argument("--no-render", dest="render", action="store_false", help="Do not render environment")
@@ -267,10 +239,6 @@ if __name__ == "__main__":
         sim.initialize()
 
         while not glfw.window_should_close(sim.window):
-            # next_state, reward = step(env, model, state)
-            # state = next_state
-            # total_reward += reward
-            # total_steps += 1
 
             sim.env.setPreferredVelocities()
             sim.simulator.doStep()
@@ -279,10 +247,10 @@ if __name__ == "__main__":
             sim.display()
             glfw.swap_buffers(sim.window)
 
-            # record positions for every 5 seconds.
-            if sim.simulator.global_time > len(sim.paths[0]) * 5:
+            if sim.simulator.global_time > len(sim.paths[0]) * 2:
                 for i in range(sim.env.num_agents):
-                    sim.paths[i].append(sim.simulator.agents[i].position)
+                    position = np.array(sim.simulator.agents[i].position)
+                    sim.paths[i].append(position)
 
             if args.real:
                 time.sleep(sim.simulator.time_step)
