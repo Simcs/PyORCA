@@ -1,5 +1,5 @@
 # PyORCA
-Python reimplementation of ORCA algorithm.
+Python implementation of ORCA algorithm.
 
 ### Simulation
 ```bash
